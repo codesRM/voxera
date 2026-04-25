@@ -33,23 +33,41 @@ const login = async (req, res, next) => {
 const getMe = async (req, res, next) => {
   try {
     const user = await authService.getMe(req.user.id);
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
+    res.status(200).json({ success: true, data: user });
   } catch (err) {
     next(err);
   }
 };
 
 const logout = (req, res) => {
-  // JWT is stateless — logout is handled on the frontend
-  // by deleting the token from storage
   res.status(200).json({
     success: true,
     message: 'Logged out successfully',
   });
 };
 
-module.exports = { register, login, getMe, logout };
+// ✅ NEW — Check username availability
+const checkUsername = async (req, res, next) => {
+  try {
+    const { username } = req.query;
+    if (!username || username.length < 3) {
+      return res.status(200).json({ available: null });
+    }
+    const result = await authService.checkUsername(username);
+    res.status(200).json(result);
+  } catch (err) { next(err); }
+};
+
+// ✅ NEW — Check email availability
+const checkEmail = async (req, res, next) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(200).json({ available: null });
+    }
+    const result = await authService.checkEmail(email);
+    res.status(200).json(result);
+  } catch (err) { next(err); }
+};
+
+module.exports = { register, login, getMe, logout, checkUsername, checkEmail };

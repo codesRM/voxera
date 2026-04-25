@@ -40,7 +40,6 @@ const loginSchema = Joi.object({
     }),
 });
 
-// Routes
 // POST /api/auth/register
 router.post('/register',
   authLimiter,
@@ -66,5 +65,9 @@ router.get('/me',
   authenticate,
   authController.getMe
 );
+
+// ✅ NEW — Availability checks (no rate limit needed, read-only)
+router.get('/check-username', authController.checkUsername);
+router.get('/check-email',    authController.checkEmail);
 
 module.exports = router;

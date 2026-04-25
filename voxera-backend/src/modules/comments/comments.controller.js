@@ -4,8 +4,16 @@ const createComment = async (req, res, next) => {
   try {
     const { body, parent_id } = req.body;
     const { postId } = req.params;
+
+    // Handle image upload
+    let image_url = null;
+    if (req.file) {
+      const base64 = req.file.buffer.toString('base64');
+      image_url = `data:${req.file.mimetype};base64,${base64}`;
+    }
+
     const comment = await commentsService.createComment(
-      req.user.id, postId, { body, parent_id }
+      req.user.id, postId, { body, parent_id, image_url }
     );
 
     res.status(201).json({
@@ -37,8 +45,16 @@ const getPostComments = async (req, res, next) => {
 const updateComment = async (req, res, next) => {
   try {
     const { body } = req.body;
+
+    // Handle image upload
+    let image_url = null;
+    if (req.file) {
+      const base64 = req.file.buffer.toString('base64');
+      image_url = `data:${req.file.mimetype};base64,${base64}`;
+    }
+
     const comment = await commentsService.updateComment(
-      req.params.id, req.user.id, { body }
+      req.params.id, req.user.id, { body, image_url }
     );
 
     res.status(200).json({

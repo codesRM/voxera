@@ -5,7 +5,6 @@ const env    = require('../../config/env');
 
 // Register a new user
 const register = async ({ username, email, password }) => {
-  // Check if email already exists
   const emailExists = await db.query(
     'SELECT id FROM users WHERE email = $1',
     [email]
@@ -16,7 +15,6 @@ const register = async ({ username, email, password }) => {
     throw error;
   }
 
-  // Check if username already exists
   const usernameExists = await db.query(
     'SELECT id FROM users WHERE username = $1',
     [username]
@@ -27,11 +25,9 @@ const register = async ({ username, email, password }) => {
     throw error;
   }
 
-  // Hash password
   const salt         = await bcrypt.genSalt(12);
   const passwordHash = await bcrypt.hash(password, salt);
 
-  // Insert user
   const result = await db.query(
     `INSERT INTO users (username, email, password_hash)
      VALUES ($1, $2, $3)
@@ -47,7 +43,6 @@ const register = async ({ username, email, password }) => {
 
 // Login existing user
 const login = async ({ email, password }) => {
-  // Find user by email
   const result = await db.query(
     'SELECT * FROM users WHERE email = $1',
     [email]
@@ -61,14 +56,12 @@ const login = async ({ email, password }) => {
 
   const user = result.rows[0];
 
-  // Check if banned
   if (user.status === 'banned') {
     const error = new Error('Your account has been banned');
     error.statusCode = 403;
     throw error;
   }
 
-  // Compare password
   const isMatch = await bcrypt.compare(password, user.password_hash);
   if (!isMatch) {
     const error = new Error('Invalid email or password');
@@ -76,10 +69,7 @@ const login = async ({ email, password }) => {
     throw error;
   }
 
-  // Generate token
   const token = generateToken(user);
-
-  // Return user without password
   const { password_hash, ...safeUser } = user;
 
   return { user: safeUser, token };
@@ -103,6 +93,24 @@ const getMe = async (userId) => {
   return result.rows[0];
 };
 
+// ✅ NEW — Check username availability
+const checkUsername = async (username) => {
+  const result = await db.query(
+    'SELECT id FROM users WHERE username = $1',
+    [username]
+  );
+  return { available: result.rows.length === 0 };
+};
+
+// ✅ NEW — Check email availability
+const checkEmail = async (email) => {
+  const result = await db.query(
+    'SELECT id FROM users WHERE email = $1',
+    [email]
+  );
+  return { available: result.rows.length === 0 };
+};
+
 // Helper — generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
@@ -112,4 +120,4 @@ const generateToken = (user) => {
   );
 };
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, getMe, checkUsername, checkEmail };

@@ -2,7 +2,7 @@ const db = require('../../config/db');
 const { createNotification } = require('../notifications/notifications.service');
 
 // Create a comment
-const createComment = async (authorId, postId, { body, parent_id }) => {
+const createComment = async (authorId, postId, { body, parent_id, image_url }) => {
   // Check post exists
   const post = await db.query(
     'SELECT id, author_id, title FROM posts WHERE id = $1 AND status = $2',
@@ -28,11 +28,12 @@ const createComment = async (authorId, postId, { body, parent_id }) => {
     }
   }
 
+  // ✅ FIXED: body can be null if image is provided
   const result = await db.query(
-    `INSERT INTO comments (post_id, author_id, body, parent_id)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO comments (post_id, author_id, body, parent_id, image_url)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [postId, authorId, body, parent_id || null]
+    [postId, authorId, body || null, parent_id || null, image_url || null]
   );
 
   // Get commenter username for notification
@@ -41,7 +42,7 @@ const createComment = async (authorId, postId, { body, parent_id }) => {
     [authorId]
   );
 
-  // Notify the post author (only if commenter is not the post author)
+  // Notify the post author
   if (post.rows[0].author_id !== authorId) {
     await createNotification({
       userId:     post.rows[0].author_id,
@@ -60,7 +61,7 @@ const createComment = async (authorId, postId, { body, parent_id }) => {
 const getPostComments = async (postId, currentUserId) => {
   const result = await db.query(
     `SELECT
-      c.id, c.body, c.parent_id, c.vote_count, c.created_at,
+      c.id, c.body, c.parent_id, c.vote_count, c.created_at, c.image_url,
       u.id AS author_id, u.username, u.display_name, u.avatar_url,
       CASE WHEN v.user_id IS NOT NULL THEN v.value ELSE NULL END AS user_vote
      FROM comments c
@@ -78,7 +79,8 @@ const getPostComments = async (postId, currentUserId) => {
 };
 
 // Update a comment
-const updateComment = async (commentId, userId, { body }) => {
+// ✅ FIXED: added image_url support
+const updateComment = async (commentId, userId, { body, image_url }) => {
   const existing = await db.query(
     'SELECT * FROM comments WHERE id = $1 AND is_deleted = false',
     [commentId]
@@ -98,10 +100,12 @@ const updateComment = async (commentId, userId, { body }) => {
 
   const result = await db.query(
     `UPDATE comments
-     SET body = $1, updated_at = NOW()
-     WHERE id = $2
+     SET body       = COALESCE($1, body),
+         image_url  = COALESCE($2, image_url),
+         updated_at = NOW()
+     WHERE id = $3
      RETURNING *`,
-    [body, commentId]
+    [body || null, image_url || null, commentId]
   );
 
   return result.rows[0];

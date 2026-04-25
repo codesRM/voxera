@@ -3,11 +3,8 @@ const router           = express.Router();
 const multer           = require('multer');
 const path             = require('path');
 const { authenticate, optionalAuthenticate } = require('../../middlewares/auth');
-
-// Import controller AFTER other requires
 const usersController  = require('./users.controller');
 
-// Multer config
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },
@@ -20,10 +17,9 @@ const upload = multer({
   },
 });
 
-// Routes
 router.get('/search',          authenticate, usersController.searchUsers);
 router.get('/:username',       optionalAuthenticate, usersController.getUserProfile);
-router.get('/:username/posts', optionalAuthenticate, usersController.getUserPosts);
+router.get('/:username/posts', usersController.getUserPosts);
 router.patch('/profile',       authenticate, usersController.updateProfile);
 router.post('/avatar',         authenticate, upload.single('avatar'), usersController.uploadAvatar);
 
