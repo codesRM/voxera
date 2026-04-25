@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Avatar from '../ui/Avatar';
 import VoteButtons from '../posts/VoteButtons';
 import CommentForm from './CommentForm';
 import { formatDate } from '../../utils/formatDate';
 import useAuthStore from '../../store/authStore';
-import { Link } from 'react-router-dom';
 
 export default function CommentItem({ comment, postId, onRefresh }) {
   const { token } = useAuthStore();
   const [showReply, setShowReply] = useState(false);
+  const [imgExpanded, setImgExpanded] = useState(false);
 
   return (
     <div className="flex gap-3">
@@ -23,11 +24,35 @@ export default function CommentItem({ comment, postId, onRefresh }) {
           >
             u/{comment.username}
           </Link>
-          <span className="text-xs text-gray-600">{formatDate(comment.created_at)}</span>
+          <span className="text-xs text-gray-600">
+            {formatDate(comment.created_at)}
+          </span>
         </div>
 
-        {/* Body */}
-        <p className="text-sm text-gray-300 mb-2">{comment.body}</p>
+        {/* Body text */}
+        {comment.body && (
+          <p className="text-sm text-gray-300 mb-2">{comment.body}</p>
+        )}
+
+        {/* ✅ Comment image */}
+        {comment.image_url && (
+          <div className="mb-2">
+            <img
+              src={comment.image_url}
+              alt="Comment image"
+              loading="lazy"
+              onClick={() => setImgExpanded(!imgExpanded)}
+              className={`rounded-lg border border-gray-700 cursor-pointer hover:opacity-90 transition object-cover ${
+                imgExpanded
+                  ? 'w-full max-h-[500px]'
+                  : 'max-h-48 max-w-xs'
+              }`}
+            />
+            <p className="text-xs text-gray-600 mt-1">
+              {imgExpanded ? 'Click to collapse' : 'Click to expand'}
+            </p>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-3">
@@ -53,7 +78,10 @@ export default function CommentItem({ comment, postId, onRefresh }) {
             <CommentForm
               postId={postId}
               parentId={comment.id}
-              onSuccess={() => { setShowReply(false); onRefresh?.(); }}
+              onSuccess={() => {
+                setShowReply(false);
+                onRefresh?.();
+              }}
             />
           </div>
         )}

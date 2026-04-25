@@ -46,10 +46,17 @@ export default function Navbar() {
   return (
     <>
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
-          {/* Logo */}
-          <Link to="/" className="flex items-center shrink-0">
-            <img src="/logo.png" alt="Voxera" className="h-8 w-auto" />
+        <div className="w-full px-4 h-16 flex items-center gap-4">
+          {/* ✅ Logo — enlarged + Voxera text beside it */}
+          <Link to="/" className="flex items-center gap-2 shrink-0 pl-0">
+            <img
+              src="/logo.png"
+              alt="Voxera"
+              className="h-16 w-auto"
+            />
+            <span className="text-xl font-bold text-orange-500 tracking-tight hidden sm:block">
+              Voxera
+            </span>
           </Link>
 
           {/* Search */}
@@ -57,13 +64,14 @@ export default function Navbar() {
             <SearchBar />
           </div>
 
-          {/* Desktop nav */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
+           {/* ✅ Desktop nav — maximized spacing pushed to far right */}
+          <div className="hidden sm:flex items-center gap-4 shrink-0 ml-auto pr-0">
             {token ? (
               <>
+                {/* Create button */}
                 <button
                   onClick={openCreate}
-                  className="flex items-center gap-1 text-sm bg-orange-500 hover:bg-orange-600 text-white font-medium px-3 py-1.5 rounded-md transition"
+                  className="flex items-center gap-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-lg transition"
                 >
                   <span className="text-base leading-none">+</span> Create
                 </button>

@@ -41,7 +41,21 @@ export default function PostCard({ post }) {
 
           {/* Body preview */}
           {post.body && (
-            <p className="text-sm text-gray-400 line-clamp-2 mb-3">{post.body}</p>
+            <p className="text-sm text-gray-400 line-clamp-2 mb-2">{post.body}</p>
+          )}
+
+          {/* ✅ Post image */}
+          {post.image_url && (
+            <Link to={`/posts/${post.id}`}>
+              <div className="mt-2 mb-3 rounded-lg overflow-hidden border border-gray-800">
+                <img
+                  src={post.image_url}
+                  alt="Post image"
+                  className="w-full max-h-96 object-cover hover:opacity-90 transition"
+                  loading="lazy"
+                />
+              </div>
+            </Link>
           )}
 
           {/* Footer */}

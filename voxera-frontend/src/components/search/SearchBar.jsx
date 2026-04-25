@@ -16,10 +16,20 @@ export default function SearchBar() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-sm">
+    <form onSubmit={handleSubmit} className="relative w-full max-w-2xl">
       <div className={`flex items-center bg-gray-800 border rounded-lg px-3 py-1.5 gap-2 transition ${
         focused ? 'border-orange-500' : 'border-gray-700'
       }`}>
+           {/* ✅ Voxera logo on far left inside search bar */}
+        <img
+          src="/logo.png"
+          alt="Voxera"
+          className="h-5 w-auto shrink-0 opacity-60"
+        />
+
+        {/* Divider */}
+        <div className="w-px h-4 bg-gray-600 shrink-0" />
+        
         {/* Search icon */}
         <svg
           className="w-4 h-4 text-gray-400 shrink-0"

@@ -14,9 +14,10 @@ export default function ProfilePage() {
   const { user: me, token } = useAuthStore();
   const queryClient = useQueryClient();
   const meId = me?.id ?? null;
+  const profileQueryKey = ['profile', username, meId];
 
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', username, meId],
+    queryKey: profileQueryKey,
     queryFn: () => getUserProfile(username).then((r) => r.data.data),
   });
 
@@ -27,22 +28,64 @@ export default function ProfilePage() {
 
   const following = !!profile?.is_following;
 
+  const setOptimisticFollowState = (isFollowing) => {
+    queryClient.setQueryData(profileQueryKey, (current) => {
+      if (!current) return current;
+
+      const followerCount = Number(current.follower_count || 0);
+
+      return {
+        ...current,
+        is_following: isFollowing,
+        follower_count: isFollowing
+          ? followerCount + 1
+          : Math.max(0, followerCount - 1),
+      };
+    });
+  };
+
   const followMut = useMutation({
     mutationFn: () => followUser(profile.id),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: profileQueryKey });
+      const previousProfile = queryClient.getQueryData(profileQueryKey);
+      setOptimisticFollowState(true);
+      return { previousProfile };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile', username, meId] });
       toast.success(`Following ${username}`);
     },
-    onError: () => toast.error('Action failed'),
+    onError: (_error, _variables, context) => {
+      if (context?.previousProfile) {
+        queryClient.setQueryData(profileQueryKey, context.previousProfile);
+      }
+      toast.error('Action failed');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: profileQueryKey });
+    },
   });
 
   const unfollowMut = useMutation({
     mutationFn: () => unfollowUser(profile.id),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: profileQueryKey });
+      const previousProfile = queryClient.getQueryData(profileQueryKey);
+      setOptimisticFollowState(false);
+      return { previousProfile };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile', username, meId] });
       toast.success(`Unfollowed ${username}`);
     },
-    onError: () => toast.error('Action failed'),
+    onError: (_error, _variables, context) => {
+      if (context?.previousProfile) {
+        queryClient.setQueryData(profileQueryKey, context.previousProfile);
+      }
+      toast.error('Action failed');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: profileQueryKey });
+    },
   });
 
   const handleFollow = () => {
